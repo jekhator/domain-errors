@@ -1,0 +1,68 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "domain-errors"
+dynamic = ["version"]
+description = "Typed domain error hierarchy with wrapping and chaining for Python services"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [{ name = "James Ekhator" }]
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
+keywords = ["exceptions", "error-handling", "errors", "chaining", "typed"]
+
+[project.urls]
+Homepage = "https://pypi.org/project/domain-errors/"
+Repository = "https://github.com/jekhator/domain-errors"
+Issues = "https://github.com/jekhator/domain-errors/issues"
+Changelog = "https://github.com/jekhator/domain-errors/blob/main/CHANGELOG.md"
+
+[tool.hatch.version]
+path = "domain_errors/config/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["domain_errors"]
+
+[tool.pytest.ini_options]
+testpaths = ["domain_errors"]
+
+[tool.coverage.run]
+source = ["domain_errors"]
+omit = ["domain_errors/common/constants/tests.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+
+[tool.dto-strict]
+paths = ["domain_errors/"]
+
+[tool.dto-strict.loc-cap]
+hard_cap = 300
+soft_target = 200
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-cov", "mypy", "ruff"]

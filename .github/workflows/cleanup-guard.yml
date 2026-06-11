@@ -1,0 +1,33 @@
+name: Cleanup Guard
+
+on:
+  pull_request
+
+jobs:
+  docs-audit-review:
+    name: Verify docs/audits and docs/reviews are present
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check docs/audits exists and is non-empty
+        run: |
+          if [ ! -d "docs/audits" ]; then
+            echo "::error::docs/audits directory not found"
+            exit 1
+          fi
+          if [ -z "$(find docs/audits -type f -name '*.md' 2>/dev/null)" ]; then
+            echo "::error::docs/audits directory is empty; add at least one audit file"
+            exit 1
+          fi
+          echo "OK: docs/audits contains audit documentation"
+      - name: Check docs/reviews exists and is non-empty
+        run: |
+          if [ ! -d "docs/reviews" ]; then
+            echo "::error::docs/reviews directory not found"
+            exit 1
+          fi
+          if [ -z "$(find docs/reviews -type f -name '*.md' 2>/dev/null)" ]; then
+            echo "::error::docs/reviews directory is empty; add at least one review file"
+            exit 1
+          fi
+          echo "OK: docs/reviews contains code review documentation"

@@ -1,0 +1,32 @@
+name: dto-strict
+
+# DTO-discipline lint (frozen+slots, facade-ban, R001-R006). Per-repo copy of
+# the canonical gate; runs on the root-layout package. Empty baseline at
+# v0.3.0 (clean rebuild — 0 violations).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+      - name: Install Python 3.12
+        run: uv python install 3.12
+      - name: Run dto-strict
+        run: uvx --python 3.12 dto-strict@0.4.0 domain_errors/ --format github
+      - name: Check LOC cap
+        run: uvx --python 3.12 dto-strict@0.4.0 loc-cap domain_errors/

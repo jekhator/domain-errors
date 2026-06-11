@@ -4,30 +4,64 @@ on:
   pull_request
 
 jobs:
-  docs-audit-review:
-    name: Verify docs/audits and docs/reviews are present
+  feature-documentation:
+    name: Verify all features have audit and review docs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check docs/audits exists and is non-empty
+      - name: Check feature documentation completeness
         run: |
-          if [ ! -d "docs/audits" ]; then
-            echo "::error::docs/audits directory not found"
+          set -e
+
+          echo "Checking that all implemented features have audit and review documentation..."
+
+          FEATURES_DIR="domain_errors/services"
+          # Pre-rename layout fallback
+          if [ ! -d "$FEATURES_DIR" ]; then FEATURES_DIR="domain_errors/errors"; fi
+          AUDITS_DIR="docs/audits"
+          REVIEWS_DIR="docs/reviews"
+
+          if [ ! -d "$FEATURES_DIR" ]; then
+            echo "ERROR: Features directory not found: $FEATURES_DIR"
             exit 1
           fi
-          if [ -z "$(find docs/audits -type f -name '*.md' 2>/dev/null)" ]; then
-            echo "::error::docs/audits directory is empty; add at least one audit file"
+
+          FEATURES=$(find "$FEATURES_DIR" -maxdepth 1 -type d ! -name "__pycache__" ! -name "tests" ! -name "constants" ! -path "$FEATURES_DIR")
+
+          MISSING_DOCS=0
+
+          for feature_dir in $FEATURES; do
+            feature_name=$(basename "$feature_dir")
+
+            # Skip features with no source files
+            if [ -z "$(find "$feature_dir" -maxdepth 1 -type f -name '*.py')" ]; then
+              continue
+            fi
+
+            # Skip features that are not implemented yet (docstring-only stubs, no classes or functions)
+            if ! grep -lqE '^(class |def )' "$feature_dir"/*.py 2>/dev/null; then
+              echo "SKIP: feature '$feature_name' has no implementation yet"
+              continue
+            fi
+
+            audit_file=$(find "$AUDITS_DIR" -name "*$feature_name*audit*" 2>/dev/null | head -1)
+            review_file=$(find "$REVIEWS_DIR" -name "*$feature_name*review*" 2>/dev/null | head -1)
+
+            if [ -z "$audit_file" ]; then
+              echo "FAIL: feature '$feature_name' missing audit doc in $AUDITS_DIR"
+              MISSING_DOCS=$((MISSING_DOCS + 1))
+            fi
+
+            if [ -z "$review_file" ]; then
+              echo "FAIL: feature '$feature_name' missing review doc in $REVIEWS_DIR"
+              MISSING_DOCS=$((MISSING_DOCS + 1))
+            fi
+          done
+
+          if [ $MISSING_DOCS -gt 0 ]; then
+            echo ""
+            echo "ERROR: $MISSING_DOCS feature(s) missing documentation."
             exit 1
           fi
-          echo "OK: docs/audits contains audit documentation"
-      - name: Check docs/reviews exists and is non-empty
-        run: |
-          if [ ! -d "docs/reviews" ]; then
-            echo "::error::docs/reviews directory not found"
-            exit 1
-          fi
-          if [ -z "$(find docs/reviews -type f -name '*.md' 2>/dev/null)" ]; then
-            echo "::error::docs/reviews directory is empty; add at least one review file"
-            exit 1
-          fi
-          echo "OK: docs/reviews contains code review documentation"
+
+          echo "All implemented features have corresponding audit and review docs."

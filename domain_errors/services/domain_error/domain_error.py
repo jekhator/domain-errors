@@ -7,6 +7,8 @@ class DomainError(Exception):
     """Base for per-project typed exception hierarchies."""
 
     code: str = "domain_error"
+    domain: str = "application"
+
     http_status: int = 500
     retryable: bool = False
     default_message: str = "An unspecified domain error occurred."

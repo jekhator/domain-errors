@@ -66,3 +66,7 @@ soft_target = 200
 
 [dependency-groups]
 dev = ["pytest>=8", "pytest-cov", "mypy", "ruff"]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"

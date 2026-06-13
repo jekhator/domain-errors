@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TypeVar
 
 from domain_errors.domains.domain_error.domain_error import DomainError
+from domain_errors.services.constants import chain as const
 
 from .chain_objects import ChainLink
 from .chain_objects import ChainVia
@@ -48,6 +49,7 @@ class ErrorChain:
                     code=getattr(current, "code", None),
                     domain=ErrorChain._domain_of(current, classifiers),
                     via=via,
+                    context=getattr(current, "context", {}),
                 )
             )
             if current.__cause__ is not None:
@@ -85,4 +87,4 @@ class ErrorChain:
             verdict = classifier.classify(err)
             if verdict is not None:
                 return verdict
-        return "python"
+        return const.DEFAULT_DOMAIN

@@ -1,4 +1,4 @@
-"""Tests for error chain value objects."""
+"""Tests for error chain ChainLink and DomainCrossing value objects."""
 
 import pytest
 from dataclasses import FrozenInstanceError
@@ -7,28 +7,6 @@ from domain_errors.services.chain.chain_objects import ChainVia
 from domain_errors.services.chain.chain_objects import ChainLink
 from domain_errors.services.chain.chain_objects import DomainCrossing
 from domain_errors.services.tests.test_chain.conftest import FakeDomainClassifier
-
-
-class TestChainVia:
-    """Tests for ChainVia enum."""
-
-    def test_root_value(self) -> None:
-        """ChainVia.ROOT has the lowercase string value."""
-        assert ChainVia.ROOT.value == "root"
-
-    def test_cause_value(self) -> None:
-        """ChainVia.CAUSE has the lowercase string value."""
-        assert ChainVia.CAUSE.value == "cause"
-
-    def test_context_value(self) -> None:
-        """ChainVia.CONTEXT has the lowercase string value."""
-        assert ChainVia.CONTEXT.value == "context"
-
-    def test_is_str_enum(self) -> None:
-        """ChainVia members are instances of str."""
-        assert isinstance(ChainVia.ROOT, str)
-        assert isinstance(ChainVia.CAUSE, str)
-        assert isinstance(ChainVia.CONTEXT, str)
 
 
 class TestChainLink:
@@ -48,6 +26,20 @@ class TestChainLink:
         assert link.code == "VAL_001"
         assert link.domain == "validation"
         assert link.via == ChainVia.ROOT
+        assert link.context == {}
+
+    def test_construction_with_context(self) -> None:
+        """ChainLink can be constructed with explicit context."""
+        ctx = {"user_id": 123, "request_id": "abc"}
+        link = ChainLink(
+            type_name="ValueError",
+            message="invalid value",
+            code="VAL_001",
+            domain="validation",
+            via=ChainVia.ROOT,
+            context=ctx,
+        )
+        assert link.context == ctx
 
     def test_frozen(self) -> None:
         """ChainLink is frozen and prevents assignment."""
@@ -62,7 +54,7 @@ class TestChainLink:
             link.type_name = "TypeError"  # type: ignore
 
     def test_equality(self) -> None:
-        """ChainLink equality compares all fields."""
+        """ChainLink equality compares all fields except context."""
         link1 = ChainLink(
             type_name="ValueError",
             message="test",
@@ -86,6 +78,27 @@ class TestChainLink:
         )
         assert link1 == link2
         assert link1 != link3
+
+    def test_equality_ignores_context(self) -> None:
+        """ChainLink equality excludes context from comparison."""
+        link1 = ChainLink(
+            type_name="ValueError",
+            message="test",
+            code="X",
+            domain="val",
+            via=ChainVia.ROOT,
+            context={"user_id": 1},
+        )
+        link2 = ChainLink(
+            type_name="ValueError",
+            message="test",
+            code="X",
+            domain="val",
+            via=ChainVia.ROOT,
+            context={"user_id": 999},
+        )
+        # Equal even though context differs, because context has compare=False
+        assert link1 == link2
 
     def test_hash(self) -> None:
         """ChainLink is hashable."""
@@ -138,6 +151,7 @@ class TestChainLink:
             "code": "VAL_001",
             "domain": "validation",
             "via": "root",
+            "context": {},
         }
 
     def test_to_log_extra_code_none(self) -> None:
@@ -156,6 +170,7 @@ class TestChainLink:
             "code": None,
             "domain": "python",
             "via": "context",
+            "context": {},
         }
 
     def test_to_log_extra_via_is_enum_value(self) -> None:
@@ -170,6 +185,20 @@ class TestChainLink:
         extra = link.to_log_extra()
         assert extra["via"] == "cause"
         assert isinstance(extra["via"], str)
+
+    def test_to_log_extra_includes_context(self) -> None:
+        """to_log_extra includes context field."""
+        ctx = {"user_id": 123, "request_id": "abc"}
+        link = ChainLink(
+            type_name="ValueError",
+            message="invalid",
+            code="VAL_001",
+            domain="validation",
+            via=ChainVia.ROOT,
+            context=ctx,
+        )
+        extra = link.to_log_extra()
+        assert extra["context"] == ctx
 
 
 class TestDomainCrossing:

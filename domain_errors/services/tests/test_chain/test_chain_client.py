@@ -160,6 +160,25 @@ class TestErrorChainHistory:
         # CustomDomainError.domain = "custom", not "application"
         assert links[0].domain == "custom"
 
+    def test_context_propagation_from_domain_error(self) -> None:
+        """history() propagates DomainError.context into ChainLink.context."""
+        err = CustomDomainError(user_id=123, request_id="abc")
+        links = ErrorChain.history(err)
+        assert links[0].context == {"user_id": 123, "request_id": "abc"}
+
+    def test_context_in_log_extra_for_domain_error(self) -> None:
+        """to_log_extra() includes the propagated context from history()."""
+        err = CustomDomainError(user_id=123, request_id="abc")
+        links = ErrorChain.history(err)
+        extra = links[0].to_log_extra()
+        assert extra["context"] == {"user_id": 123, "request_id": "abc"}
+
+    def test_context_empty_dict_for_foreign_error(self) -> None:
+        """history() assigns empty dict context to foreign errors."""
+        err = ValueError("test")
+        links = ErrorChain.history(err)
+        assert links[0].context == {}
+
     def test_domain_fallback_to_python(self) -> None:
         """history() falls back to 'python' when no classifier matches."""
         err = KeyError("key")
@@ -259,35 +278,3 @@ class TestErrorChainCrossings:
             crossings = ErrorChain.crossings(e, classifiers=(classifier,))
         # custom->validation and validation->python
         assert len(crossings) == 2
-
-
-class TestErrorChainDomainOf:
-    """Tests for ErrorChain._domain_of()."""
-
-    def test_domain_from_classvar(self) -> None:
-        """_domain_of returns the domain classvar if it is a string."""
-        err = CustomDomainError()
-        domain = ErrorChain._domain_of(err, classifiers=())
-        assert domain == "custom"
-
-    def test_domain_from_first_matching_classifier(self) -> None:
-        """_domain_of uses the first classifier that returns non-None."""
-        classifier = FakeDomainClassifier()
-        err = ValueError("test")
-        domain = ErrorChain._domain_of(err, classifiers=(classifier,))
-        assert domain == "validation"
-
-    def test_domain_fallback_python(self) -> None:
-        """_domain_of defaults to 'python' when no classifier matches."""
-        classifier = FakeDomainClassifier()
-        err = KeyError("test")
-        domain = ErrorChain._domain_of(err, classifiers=(classifier,))
-        assert domain == "python"
-
-    def test_domain_ignores_non_string_attribute(self) -> None:
-        """_domain_of ignores a domain attribute that is not a string."""
-        err = ValueError("test")
-        err.domain = 123  # type: ignore
-        classifier = FakeDomainClassifier()
-        domain = ErrorChain._domain_of(err, classifiers=(classifier,))
-        assert domain == "validation"

@@ -138,21 +138,26 @@ class TestDomainErrorChainingBehavior:
 
 
 class TestDomainErrorContextPropagation:
-    """Tests for context propagation (known-behavior flag)."""
+    """Tests for context propagation (Phase 16 DTO-ify change)."""
 
-    def test_context_not_in_chain_links(self) -> None:
-        """Current behavior: raise-site context does not propagate into the chain (pending design decision)."""
-        # This test pins current behavior: context stored on DomainError
-        # does NOT get extracted into ChainLink, because ChainLink has no
-        # context field and to_log_extra() does not include context.
+    def test_context_propagates_into_chain_links(self) -> None:
+        """context stored on DomainError propagates into ChainLink.context (Phase 16)."""
         from domain_errors.services.chain.chain_client import ErrorChain
 
         err = DomainError(message="error", user_id=42, request_id="xyz")
         assert err.context == {"user_id": 42, "request_id": "xyz"}
         links = ErrorChain.history(err)
         assert len(links) == 1
+        # context IS propagated into the link
+        assert links[0].context == {"user_id": 42, "request_id": "xyz"}
         extra = links[0].to_log_extra()
-        # context is NOT in the link
-        assert "user_id" not in extra
-        assert "request_id" not in extra
-        assert set(extra.keys()) == {"type", "message", "code", "domain", "via"}
+        # and appears in to_log_extra output
+        assert extra["context"] == {"user_id": 42, "request_id": "xyz"}
+        assert set(extra.keys()) == {
+            "type",
+            "message",
+            "code",
+            "domain",
+            "via",
+            "context",
+        }

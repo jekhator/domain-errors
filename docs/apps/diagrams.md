@@ -6,7 +6,7 @@
 ## Error Class Hierarchy & Chaining
 
 ```
-domain_errors/services/domain_error/domain_error.py
+domain_errors/domains/domain_error/domain_error.py
 ═══════════════════════════════════════════════════════════════════════
 [EXCEPTION]
 

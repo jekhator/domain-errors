@@ -1,4 +1,4 @@
-"""DomainError base class (Stage 1 single file)."""
+"""DomainError base class."""
 
 from __future__ import annotations
 

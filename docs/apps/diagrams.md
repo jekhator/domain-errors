@@ -36,10 +36,8 @@ domain_errors/services/domain_error/domain_error.py
 ## Error Chaining Service
 
 ```
-domain_errors/services/chain/chain.py
+domain_errors/services/chain/chain_objects.py
 ═══════════════════════════════════════════════════════════════════════
-
-TError = TypeVar("TError", bound=DomainError)
 
 ┌─ [ENUM] ChainVia(StrEnum) ────────────────────────────────────────┐
 │   ROOT = "root"       (exception chain started here)              │
@@ -90,8 +88,10 @@ TError = TypeVar("TError", bound=DomainError)
 └───────────────────────────────────────────────────────────────────┘
 
 
-domain_errors/services/chain/chain.py
+domain_errors/services/chain/chain_client.py
 ───────────────────────────────────────────────────────────────────────
+
+TError = TypeVar("TError", bound=DomainError)
 
 ┌─ [SERVICE] ErrorChain (stateless) ────────────────────────────────┐
 │   [static] wrap(                                                  │

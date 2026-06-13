@@ -32,13 +32,15 @@ path = "domain_errors/config/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["domain_errors"]
+exclude = ["domain_errors/**/tests", "domain_errors/conftest.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["domain_errors"]
+python_files = ["test_*.py"]
 
 [tool.coverage.run]
 source = ["domain_errors"]
-omit = ["domain_errors/common/constants/tests.py"]
+omit = ["domain_errors/**/tests/*", "domain_errors/common/constants/tests.py", "domain_errors/conftest.py"]
 
 [tool.coverage.report]
 exclude_lines = [

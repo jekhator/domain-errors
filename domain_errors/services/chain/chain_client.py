@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TypeVar
 
-from domain_errors.services.domain_error.domain_error import DomainError
+from domain_errors.domains.domain_error.domain_error import DomainError
 
 from .chain_objects import ChainLink
 from .chain_objects import ChainVia

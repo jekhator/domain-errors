@@ -1,1 +1,1 @@
-"""Error hierarchy and utilities."""
+"""Error chaining services."""

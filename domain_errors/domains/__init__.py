@@ -1,1 +1,1 @@
-"""Foreign error-family adapters mapping external domains onto the chain model."""
+"""Domain taxonomy: the DomainError base class and foreign error-family adapters."""
